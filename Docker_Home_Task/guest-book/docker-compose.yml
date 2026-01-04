@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7-jammy
+    container_name: guestbook-db
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - backend-db-net
+
+  # Backend API
+  backend:
+    build: ./backend
+    container_name: guestbook-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017/guestbook
+    depends_on:
+      - mongodb
+    networks:
+      - frontend-backend-net
+      - backend-db-net
+
+  # Frontend
+  frontend:
+    build: ./frontend
+    container_name: guestbook-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - frontend-backend-net
+
+# Network Definitions
+networks:
+  frontend-backend-net:
+    driver: bridge
+  backend-db-net:
+    driver: bridge
+
+# Volume Definition
+volumes:
+  mongo_data:

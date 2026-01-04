@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guest Book</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(120deg, #f6f9ff, #e9ecf7);
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 650px;
+      margin: 50px auto;
+      background: #ffffff;
+      padding: 35px;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    h1 {
+      margin: 0;
+      text-align: center;
+      font-size: 32px;
+      color: #2d2d2d;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #777;
+      font-size: 14px;
+      margin-top: 6px;
+      margin-bottom: 35px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1.5px solid #dcdcdc;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #5c7cfa;
+      box-shadow: 0 0 0 3px rgba(92, 124, 250, 0.15);
+    }
+
+    textarea {
+      resize: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #5c7cfa, #748ffc);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(92, 124, 250, 0.4);
+    }
+
+    .messages {
+      margin-top: 35px;
+    }
+
+    .message {
+      background: #f9fafc;
+      border-left: 5px solid #5c7cfa;
+      padding: 16px 18px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .message-name {
+      font-weight: 600;
+      color: #364fc7;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    .message-time {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #999;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Guest Book</h1>
+    <p class="subtitle">Powered by Docker Compose</p>
+
+    <div class="form-group">
+      <input type="text" id="nameInput" placeholder="Your name" />
+    </div>
+
+    <div class="form-group">
+      <textarea id="messageInput" placeholder="Leave a message..." rows="3"></textarea>
+    </div>
+
+    <button onclick="addMessage()">Sign Guest Book</button>
+
+    <div class="messages" id="messagesList">
+      <p style="text-align:center; color:#999;">Loading messages...</p>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api/messages';
+
+    async function loadMessages() {
+      const response = await fetch(API_URL);
+      const messages = await response.json();
+      const messagesList = document.getElementById('messagesList');
+
+      if (messages.length === 0) {
+        messagesList.innerHTML =
+          '<p style="text-align:center; color:#999;">No messages yet. Be the first!</p>';
+        return;
+      }
+
+      messagesList.innerHTML = messages
+        .map(
+          (msg) => `
+        <div class="message">
+          <div class="message-name">${escapeHtml(msg.name)}</div>
+          <div>${escapeHtml(msg.message)}</div>
+          <div class="message-time">${new Date(msg.timestamp).toLocaleString()}</div>
+        </div>
+      `
+        )
+        .join('');
+    }
+
+    async function addMessage() {
+      const name = document.getElementById('nameInput').value.trim();
+      const message = document.getElementById('messageInput').value.trim();
+
+      if (!name || !message) {
+        alert('Please enter both name and message');
+        return;
+      }
+
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, message }),
+      });
+
+      document.getElementById('nameInput').value = '';
+      document.getElementById('messageInput').value = '';
+      loadMessages();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    loadMessages();
+  </script>
+</body>
+
+</html>
